@@ -1,0 +1,6 @@
+{
+  "name": "MindBridge - Sistema de Bienestar Emocional con IA y Panel de Expertos",
+  "description": "Plataforma híbrida de atención emocional y triage psicológico con Google Gemini, enrutamiento WhatsApp vía Twilio y panel web en tiempo real para psicólogos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

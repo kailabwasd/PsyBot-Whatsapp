@@ -1,0 +1,87 @@
+{
+  "entities": {
+    "ClinicalRecord": {
+      "title": "ClinicalRecord",
+      "description": "Ficha e historial clínico de paciente con datos sociodemográficos, triage, impresiones diagnósticas y resumen de conversaciones para acceso de psicólogos.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Identificador único del expediente / teléfono normalizado"
+        },
+        "patientName": {
+          "type": "string",
+          "description": "Nombre y apellidos del paciente"
+        },
+        "age": {
+          "type": "number",
+          "description": "Edad del paciente"
+        },
+        "gender": {
+          "type": "string",
+          "description": "Género o identidad del paciente"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "Teléfono de contacto WhatsApp"
+        },
+        "emergencyContact": {
+          "type": "string",
+          "description": "Contacto de emergencia o familiar de apoyo"
+        },
+        "riskLevel": {
+          "type": "string",
+          "enum": ["BAJO", "MODERADO", "ALTO", "CRISIS"],
+          "description": "Nivel de riesgo clínico actual"
+        },
+        "primaryEmotion": {
+          "type": "string",
+          "description": "Emoción primaria detectada en triage"
+        },
+        "triageSummary": {
+          "type": "string",
+          "description": "Resumen clínico del motivo de consulta e ingreso"
+        },
+        "medicalHistory": {
+          "type": "string",
+          "description": "Antecedentes médicos y psicológicos relevantes"
+        },
+        "conversationTranscript": {
+          "type": "string",
+          "description": "Transcripción estructurada de lo hablado durante las sesiones y chats"
+        },
+        "clinicalEvolution": {
+          "type": "string",
+          "description": "Notas de evolución y plan psicoterapéutico redactadas por el psicólogo"
+        },
+        "diagnosticImpressions": {
+          "type": "array",
+          "description": "Lista de hipótesis diagnósticas DSM-5 / CIE-11"
+        },
+        "assignedPsychologist": {
+          "type": "string",
+          "description": "Nombre del psicólogo a cargo"
+        },
+        "accessLink": {
+          "type": "string",
+          "description": "Enlace directo seguro para que el psicólogo acceda a este expediente"
+        },
+        "lastUpdated": {
+          "type": "number",
+          "description": "Timestamp Unix de la última actualización"
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Timestamp Unix de creación del expediente"
+        }
+      },
+      "required": ["id", "patientName", "phoneNumber", "riskLevel", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/clinical_records/{recordId}": {
+      "schema": "ClinicalRecord",
+      "description": "Colección de historiales clínicos completos para consulta y edición de psicólogos acreditados."
+    }
+  }
+}
