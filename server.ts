@@ -33,16 +33,116 @@ const TWILIO_CONFIG = {
   whatsappNumber: process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886',
 };
 
-// Helper: Sanitize phone numbers for Twilio WhatsApp format (e.g. +573107956907 -> whatsapp:+573107956907)
+// Helper: Sanitize phone numbers for Twilio WhatsApp format (e.g. +573107956907 -> whatsapp:+573107956907, whatsapp:CO.2689113694823723)
 function sanitizeWhatsAppNumber(rawPhone: string): string {
-  let cleaned = rawPhone.replace(/^whatsapp:/i, '').trim();
-  // Remove spaces, hyphens, parentheses, and dots
+  let cleaned = rawPhone.trim();
+  if (cleaned.toLowerCase().startsWith('whatsapp:')) {
+    cleaned = cleaned.substring(9).trim();
+  }
+  // If it's a Twilio channel alphanumeric identifier like CO.2689113694823723
+  if (/^[A-Z]{2}\.\d+/i.test(cleaned)) {
+    return `whatsapp:${cleaned}`;
+  }
+  // Remove spaces, hyphens, parentheses, and dots for regular numbers
   cleaned = cleaned.replace(/[\s\-\(\)\.]/g, '');
   if (!cleaned.startsWith('+')) {
     cleaned = `+${cleaned}`;
   }
   return `whatsapp:${cleaned}`;
 }
+
+// Track processed Twilio message SIDs to prevent duplicate responses
+const processedTwilioSids = new Set<string>();
+let isPollingTwilio = false;
+let lastSyncTimestamp = Date.now();
+
+// Twilio Inbound Synchronization Engine
+// Allows full 2-way WhatsApp interaction directly in Google AI Studio without requiring Ngrok or external webhooks!
+async function syncTwilioInboundMessages(): Promise<{ newCount: number; processed: string[] }> {
+  if (isPollingTwilio) return { newCount: 0, processed: [] };
+  const { accountSid, authToken, whatsappNumber } = TWILIO_CONFIG;
+  if (!accountSid || !authToken) return { newCount: 0, processed: [] };
+
+  isPollingTwilio = true;
+  const processedList: string[] = [];
+
+  try {
+    const authString = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
+    const targetNumber = encodeURIComponent(whatsappNumber);
+    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json?To=${targetNumber}&PageSize=15`;
+
+    const response = await fetch(twilioUrl, {
+      headers: {
+        'Authorization': `Basic ${authString}`,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      return { newCount: 0, processed: [] };
+    }
+
+    const data: any = await response.json();
+    const messages: any[] = data.messages || [];
+
+    // Filter inbound messages, order chronologically (oldest to newest)
+    const inbound = messages
+      .filter((m) => m.direction === 'inbound')
+      .reverse();
+
+    for (const msg of inbound) {
+      if (processedTwilioSids.has(msg.sid)) continue;
+      processedTwilioSids.add(msg.sid);
+
+      // Only process messages created within the last 30 minutes
+      const msgTime = new Date(msg.date_created).getTime();
+      const ageMinutes = (Date.now() - msgTime) / (1000 * 60);
+      if (ageMinutes > 30) {
+        continue;
+      }
+
+      let userText = (msg.body || '').trim();
+      if (!userText) continue;
+
+      // Handle Twilio Sandbox join handshake silently or with a friendly greeting
+      if (userText.toLowerCase().startsWith('join ')) {
+        console.log(`[Twilio Sync] Patient joined sandbox: ${msg.from}`);
+        continue;
+      }
+
+      // Parse JSON payload if sent via quick-reply or button template
+      try {
+        if (userText.startsWith('{') && userText.includes('twilio/quick-reply')) {
+          const parsed = JSON.parse(userText);
+          userText = parsed.types?.['twilio/quick-reply']?.body || userText;
+        }
+      } catch {}
+
+      console.log(`[Twilio Sync] 📥 Inbound WhatsApp from ${msg.from}: "${userText}"`);
+
+      // Run through MindBridge triage & conversational state machine
+      const result = await processIncomingWhatsAppMessage(msg.from, userText, msg.from);
+      processedList.push(`${msg.from}: ${userText}`);
+
+      // If the session is NOT in human mode, dispatch the bot reply via Twilio REST API
+      if (result.session.state !== 'HUMAN_MODE' && result.reply) {
+        console.log(`[Twilio Sync] 📤 Replying via WhatsApp REST API to ${msg.from}`);
+        await sendTwilioWhatsAppMessage(msg.from, result.reply);
+      }
+    }
+
+    lastSyncTimestamp = Date.now();
+  } catch (err) {
+    console.error('[Twilio Sync] Polling error:', err);
+  } finally {
+    isPollingTwilio = false;
+  }
+
+  return { newCount: processedList.length, processed: processedList };
+}
+
+// Start continuous polling every 2.5 seconds
+setInterval(syncTwilioInboundMessages, 2500);
 
 // Helper: Send message to patient WhatsApp via Twilio REST API
 async function sendTwilioWhatsAppMessage(
@@ -759,8 +859,28 @@ app.get('/api/health', (req, res) => {
     twilioWebhookUrl: '/api/whatsapp',
     twilioAccountSid: TWILIO_CONFIG.accountSid,
     twilioWhatsappNumber: TWILIO_CONFIG.whatsappNumber,
+    twilioPollingActive: true,
+    lastSyncTimestamp,
+    processedSidsCount: processedTwilioSids.size,
     timestamp: new Date().toISOString(),
   });
+});
+
+// Twilio Manual Trigger Sync Route
+app.post('/api/twilio/sync', async (req, res) => {
+  try {
+    const result = await syncTwilioInboundMessages();
+    res.json({
+      success: true,
+      newMessagesCount: result.newCount,
+      processed: result.processed,
+      totalTracked: processedTwilioSids.size,
+      sessionsCount: sessions.size,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error?.message || 'Error syncing Twilio' });
+  }
 });
 
 // Twilio Diagnostic & Test Route
