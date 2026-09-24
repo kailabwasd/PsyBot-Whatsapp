@@ -15,11 +15,16 @@ import {
   doc, 
   setDoc, 
   getDoc, 
-  getDocFromServer 
+  getDocFromServer,
+  collection,
+  getDocs,
+  type DocumentData
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import type { PsychologistAuthUser } from '../types/index.ts';
 import { encryptSecret, decryptSecret } from './cryptoUtils.ts';
+import { generateSecret, generateURI, verifySync } from 'otplib';
+import qrcode from 'qrcode';
 
 // Initialize Firebase App
 export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
@@ -30,16 +35,13 @@ export const auth = getAuth(app);
 // Initialize Cloud Firestore
 export const db = getFirestore(app);
 
-import * as otplib from 'otplib';
-import qrcode from 'qrcode';
-
 /**
  * Generate a new TOTP secret and QR code data URL for 2FA setup
  */
 export async function generate2FASecret(userEmail: string): Promise<{ secret: string; qrCodeUrl: string }> {
-  const secret = otplib.authenticator.generateSecret();
+  const secret = generateSecret();
   const serviceName = 'Psybot SubaTECH';
-  const otpauth = otplib.authenticator.keyuri(userEmail, serviceName, secret);
+  const otpauth = generateURI({ secret, label: userEmail, issuer: serviceName });
   const qrCodeUrl = await qrcode.toDataURL(otpauth);
   return { secret, qrCodeUrl };
 }
@@ -49,7 +51,8 @@ export async function generate2FASecret(userEmail: string): Promise<{ secret: st
  */
 export function verify2FAToken(token: string, secret: string): boolean {
   try {
-    return otplib.authenticator.verify({ token, secret });
+    const result = verifySync({ token, secret });
+    return typeof result === 'boolean' ? result : !!(result && (result as any).valid);
   } catch {
     return false;
   }
@@ -192,7 +195,7 @@ export async function signInWithGoogle(): Promise<{ user: PsychologistAuthUser; 
     // Check if this is the designated Administrator (kailabwasd@gmail.com)
     if (isUserAdmin(userEmail)) {
       const adminProfile = createAdminProfile(
-        user.email || ADMIN_EMAIL,
+        user.email || ADMIN_EMAILS[0],
         user.displayName || 'Administrador General (Psybot)',
         user.photoURL || undefined
       );
@@ -342,7 +345,7 @@ export async function listPsychologistsFromFirestore(): Promise<PsychologistAuth
     const colRef = collection(db, 'psychologists');
     const snapshot = await getDocs(colRef);
     const list: PsychologistAuthUser[] = [];
-    snapshot.forEach((docSnap) => {
+    snapshot.forEach((docSnap: DocumentData) => {
       list.push(docSnap.data() as PsychologistAuthUser);
     });
     // Include current admin owner if not in list

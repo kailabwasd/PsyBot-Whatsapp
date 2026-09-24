@@ -5,7 +5,7 @@
  * Blocks access if reCAPTCHA verification fails or if the security score is below 0.5.
  */
 
-import { onRequest } from 'firebase-functions/v2/https';
+import { onRequest, type Request, type Response } from 'firebase-functions/v2/https';
 import * as logger from 'firebase-functions/logger';
 
 interface RecaptchaResponse {
@@ -19,7 +19,7 @@ interface RecaptchaResponse {
 
 export const verifyRecaptcha = onRequest(
   { cors: true },
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     // Enable CORS for preflight and standard requests
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');

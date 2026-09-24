@@ -12,7 +12,8 @@ dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
+const HOST = '0.0.0.0';
 
 // Body parsers - Twilio sends x-www-form-urlencoded, frontends send json
 app.use(express.json());
@@ -1115,8 +1116,8 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-app.listen(PORT, () => {
-  console.log(`🌿 Psybot server running on http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`🌿 Psybot server running on http://${HOST}:${PORT}`);
   console.log(`⚡ Twilio WhatsApp webhook ready at POST /api/whatsapp`);
   console.log(`💚 Healthcheck endpoint ready at GET /health`);
 });
