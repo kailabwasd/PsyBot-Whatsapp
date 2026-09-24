@@ -49,6 +49,24 @@ export interface PsychologistProfile {
   activeCasesCount: number;
 }
 
+export interface PsychologistAuthUser {
+  uid: string;
+  email: string | null;
+  displayName: string;
+  photoURL: string;
+  provider: 'google.com' | 'github.com' | 'email' | 'demo' | string;
+  role: string;
+  license: string; // Registro Sanitario obligatorio
+  specialty: string;
+  institution?: string;
+  phone?: string;
+  termsAccepted: boolean;
+  profileCompleted: boolean;
+  isAdmin?: boolean;
+  createdAt?: number;
+  lastLoginAt?: number;
+}
+
 export interface TwilioConfig {
   accountSid: string;
   authToken: string;

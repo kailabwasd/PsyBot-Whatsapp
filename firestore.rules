@@ -9,5 +9,9 @@ service cloud.firestore {
     match /clinical_records/{recordId} {
       allow read, write: if true;
     }
+
+    match /psychologists/{userId} {
+      allow read, write: if true;
+    }
   }
 }

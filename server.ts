@@ -910,6 +910,11 @@ app.post('/api/twilio/test', async (req, res) => {
   }
 });
 
+// Healthcheck endpoint for Railway, Render and Docker deployments
+app.get('/health', (_req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: Date.now(), service: 'psybot-backend' });
+});
+
 // Vite middleware or Static files
 if (process.env.NODE_ENV !== 'production') {
   const vite = await createViteServer({
@@ -925,6 +930,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 app.listen(PORT, () => {
-  console.log(`🌿 MindBridge server running on http://localhost:${PORT}`);
-  console.log(`⚡ Twilio WhatsApp webhook ready at POST http://localhost:${PORT}/api/whatsapp`);
+  console.log(`🌿 Psybot server running on http://localhost:${PORT}`);
+  console.log(`⚡ Twilio WhatsApp webhook ready at POST /api/whatsapp`);
+  console.log(`💚 Healthcheck endpoint ready at GET /health`);
 });

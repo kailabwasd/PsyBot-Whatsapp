@@ -76,12 +76,81 @@
         }
       },
       "required": ["id", "patientName", "phoneNumber", "riskLevel", "createdAt"]
+    },
+    "PsychologistUser": {
+      "title": "PsychologistUser",
+      "description": "Perfil y credenciales de psicólogo o profesional de salud mental autenticado mediante Google o GitHub.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Identificador de usuario único en Firebase Auth"
+        },
+        "email": {
+          "type": "string",
+          "description": "Correo electrónico institucional o personal del profesional"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Nombre y apellidos completos del psicólogo"
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL del avatar o fotografía de perfil"
+        },
+        "provider": {
+          "type": "string",
+          "enum": ["google.com", "github.com", "custom", "demo"],
+          "description": "Método de autenticación utilizado"
+        },
+        "role": {
+          "type": "string",
+          "description": "Rol clínico dentro del equipo"
+        },
+        "license": {
+          "type": "string",
+          "description": "Número de colegiatura o registro profesional sanitario"
+        },
+        "specialty": {
+          "type": "string",
+          "description": "Área de especialización clínica"
+        },
+        "termsAccepted": {
+          "type": "boolean",
+          "description": "Indica si aceptó las políticas de privacidad y confidencialidad clínica"
+        },
+        "profileCompleted": {
+          "type": "boolean",
+          "description": "Indica si el usuario completó el formulario de registro sanitario y perfil clínico"
+        },
+        "institution": {
+          "type": "string",
+          "description": "Centro de salud, clínica o subred hospitalaria a la que pertenece"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Teléfono de contacto clínico o de guardia"
+        },
+        "lastLoginAt": {
+          "type": "number",
+          "description": "Timestamp del último inicio de sesión"
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Timestamp del registro inicial"
+        }
+      },
+      "required": ["uid", "displayName"]
     }
   },
   "firestore": {
     "/clinical_records/{recordId}": {
       "schema": "ClinicalRecord",
       "description": "Colección de historiales clínicos completos para consulta y edición de psicólogos acreditados."
+    },
+    "/psychologists/{userId}": {
+      "schema": "PsychologistUser",
+      "description": "Colección de perfiles y sesiones activas de psicólogos colegiados."
     }
   }
 }

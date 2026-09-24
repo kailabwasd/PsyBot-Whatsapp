@@ -1,1 +1,30 @@
 @import "tailwindcss";
+
+:root {
+  --bogota-navy: #0B2545;
+  --bogota-red: #C8102E;
+  --bogota-yellow: #FFC800;
+  --gov-blue: #004884;
+}
+
+/* Custom modern scrollbar for navigation tabs bar */
+.nav-scrollbar::-webkit-scrollbar {
+  height: 5px;
+}
+.nav-scrollbar::-webkit-scrollbar-track {
+  background: rgba(11, 37, 69, 0.4);
+  border-radius: 9999px;
+}
+.nav-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #FFC800, #C8102E);
+  border-radius: 9999px;
+}
+.nav-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #FFC800;
+}
+
+/* Flag ribbon of Bogota D.C. (Yellow & Red) */
+.bogota-flag-ribbon {
+  height: 4px;
+  background: linear-gradient(90deg, #FFC800 0%, #FFC800 50%, #C8102E 50%, #C8102E 100%);
+}

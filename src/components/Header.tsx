@@ -1,253 +1,250 @@
 import React, { useState } from 'react';
 import { 
-  HeartHandshake, 
   ShieldAlert, 
   UserCheck, 
   Activity, 
   Radio, 
-  PlusCircle, 
-  RotateCcw,
-  Sparkles,
-  ChevronDown
+  LogOut, 
+  ShieldCheck, 
+  Award, 
+  Edit3, 
+  Building2,
+  ChevronDown,
+  PhoneCall,
+  ExternalLink,
+  HeartPulse
 } from 'lucide-react';
-import type { PsychologistProfile } from '../types/index.ts';
-
-export const PSYCHOLOGISTS: PsychologistProfile[] = [
-  {
-    id: 'psy-sofia',
-    name: 'Dra. Sofía Méndez',
-    role: 'Psicóloga Clínica & Triage',
-    license: 'Col. Sanitario M-28941',
-    avatar: 'https://images.unsplash.com/photo-1594824813576-a05e263d9061?w=150&auto=format&fit=crop&q=80',
-    specialty: 'Intervención en Crisis e Ideación',
-    activeCasesCount: 2,
-  },
-  {
-    id: 'psy-carlos',
-    name: 'Dr. Carlos Rivas',
-    role: 'Especialista TCC',
-    license: 'Col. Sanitario M-34102',
-    avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150&auto=format&fit=crop&q=80',
-    specialty: 'Ataques de Pánico y Trastorno de Ansiedad',
-    activeCasesCount: 1,
-  },
-  {
-    id: 'psy-elena',
-    name: 'Lic. Elena Ortiz',
-    role: 'Terapeuta de Primeros Auxilios',
-    license: 'Col. Sanitario M-19830',
-    avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80',
-    specialty: 'Burnout, Duelo y Contención Emocional',
-    activeCasesCount: 0,
-  }
-];
+import type { PsychologistAuthUser } from '../types/index.ts';
+import { BogotaCrest } from './BogotaCrest.tsx';
+import { SubaTechLogo } from './SubaTechLogo.tsx';
 
 interface HeaderProps {
-  currentSpecialist: PsychologistProfile;
-  onSelectSpecialist: (specialist: PsychologistProfile) => void;
+  currentUser: PsychologistAuthUser;
+  onEditProfile: () => void;
   waitingCount: number;
   crisisCount: number;
   activeCount: number;
-  onSimulateScenario: (type: 'CRISIS' | 'PANIC' | 'ANXIETY') => void;
-  onReset: () => void;
+  onLogout: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  currentSpecialist,
-  onSelectSpecialist,
+  currentUser,
+  onEditProfile,
   waitingCount,
   crisisCount,
   activeCount,
-  onSimulateScenario,
-  onReset,
+  onLogout,
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [scenarioOpen, setScenarioOpen] = useState(false);
 
   return (
-    <header className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          
-          {/* Logo & Brand */}
+    <header className="sticky top-0 z-40 shadow-sm">
+      {/* 1. Barra Superior Institucional GOV.CO (Estilo Oficial Colombia & Bogotá.gov.co) */}
+      <div className="bg-[#004884] text-white text-[11px] font-medium border-b border-[#003866]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-teal-500/20">
-              <HeartHandshake className="w-6 h-6 text-slate-950 stroke-[2.2]" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-teal-300 via-emerald-200 to-white bg-clip-text text-transparent">
-                  MindBridge
-                </span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-semibold border border-emerald-500/30 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  En Vivo
-                </span>
-              </div>
-              <p className="text-xs text-slate-400 hidden sm:block">
-                Plataforma Híbrida de Triage Emocional WhatsApp & IA
-              </p>
-            </div>
-          </div>
-
-          {/* Real-time metrics bar */}
-          <div className="hidden lg:flex items-center space-x-3 text-xs">
-            <button
-              onClick={() => {
-                const navBtn = document.querySelector('[data-tab="INTEGRATION"]') as HTMLButtonElement;
-                if (navBtn) navBtn.click();
-              }}
-              className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-300 transition"
-              title="Abrir panel de diagnóstico y conexión Twilio 24/7"
+            {/* Logo GOV.CO */}
+            <a 
+              href="https://www.gov.co" 
+              target="_blank" 
+              rel="noreferrer"
+              className="flex items-center gap-1 font-black tracking-wider text-xs hover:text-amber-200 transition"
+              title="Portal Único del Estado Colombiano"
             >
-              <Radio className="w-3.5 h-3.5 text-teal-400 animate-pulse" />
-              <span className="text-slate-300">Twilio WhatsApp:</span>
-              <span className="text-emerald-400 font-mono font-bold">+1 415 523 8886</span>
-            </button>
+              <span>GOV.CO</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#FFC800]"></span>
+            </a>
 
-            {crisisCount > 0 && (
-              <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-red-950/60 border border-red-500/50 text-red-300 animate-bounce">
-                <ShieldAlert className="w-4 h-4 text-red-400" />
-                <span className="font-bold">{crisisCount} en Alerta Crisis</span>
-              </div>
-            )}
+            <span className="text-[#6699CC] hidden sm:inline">|</span>
 
-            <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-amber-950/40 border border-amber-500/30 text-amber-200">
-              <Activity className="w-3.5 h-3.5 text-amber-400" />
-              <span>Cola Triage:</span>
-              <span className="font-bold bg-amber-500/20 px-1.5 py-0.2 rounded text-amber-300">{waitingCount}</span>
-            </div>
-
-            <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300">
-              <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Mis Casos:</span>
-              <span className="font-bold text-white">{activeCount}</span>
-            </div>
+            <span className="hidden sm:inline text-slate-200 font-normal">
+              Portal Oficial de la Alcaldía Mayor de Bogotá D.C.
+            </span>
           </div>
 
-          {/* Actions & Specialist Switcher */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4 text-[11px]">
+            <a 
+              href="https://bogota.gov.co" 
+              target="_blank" 
+              rel="noreferrer" 
+              className="hover:underline flex items-center gap-1 text-slate-200 hover:text-white"
+            >
+              <span>bogota.gov.co</span>
+              <ExternalLink className="w-3 h-3 text-slate-300" />
+            </a>
+            <span className="text-[#6699CC] hidden md:inline">|</span>
+            <div className="hidden md:flex items-center gap-2 text-amber-300 font-semibold">
+              <PhoneCall className="w-3 h-3" />
+              <span>Línea 106 de Ayuda Emocional</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Barra Principal de Identidad con Psybot y SubaTech */}
+      <div className="bg-[#0B2545] border-b border-slate-800 text-white shadow-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex items-center justify-between gap-4">
             
-            {/* Simulation dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setScenarioOpen(!scenarioOpen)}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-teal-600/20 hover:bg-teal-600/30 text-teal-300 border border-teal-500/30 text-xs font-semibold transition"
-                title="Generar caso de prueba"
-              >
-                <PlusCircle className="w-4 h-4" />
-                <span className="hidden md:inline">Simular Paciente</span>
-                <ChevronDown className="w-3 h-3" />
-              </button>
-
-              {scenarioOpen && (
-                <div 
-                  className="absolute right-0 mt-2 w-56 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
-                  onClick={() => setScenarioOpen(false)}
-                >
-                  <div className="px-3 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-700/60">
-                    Inyectar Paciente Real de Prueba
-                  </div>
-                  <button
-                    onClick={() => onSimulateScenario('CRISIS')}
-                    className="w-full text-left px-3 py-2 text-xs text-red-300 hover:bg-red-500/10 flex items-center space-x-2"
-                  >
-                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                    <span>🚨 Paciente en Crisis (Pide Terapeuta)</span>
-                  </button>
-                  <button
-                    onClick={() => onSimulateScenario('PANIC')}
-                    className="w-full text-left px-3 py-2 text-xs text-amber-300 hover:bg-amber-500/10 flex items-center space-x-2"
-                  >
-                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                    <span>⚡ Paciente con Pánico (Pide Terapeuta)</span>
-                  </button>
-                  <button
-                    onClick={() => onSimulateScenario('ANXIETY')}
-                    className="w-full text-left px-3 py-2 text-xs text-teal-300 hover:bg-teal-500/10 flex items-center space-x-2"
-                  >
-                    <span className="w-2 h-2 rounded-full bg-teal-400"></span>
-                    <span>🌿 Paciente con Ansiedad (Pide Terapeuta)</span>
-                  </button>
-                </div>
-              )}
+            {/* Marca Psybot & SubaTech */}
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+              <SubaTechLogo size="md" />
+              
+              <div className="hidden sm:flex flex-col border-l border-slate-700 pl-4 min-w-0">
+                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                  Sistema de Teleorientación & Triage Clínico 24/7
+                </span>
+                <span className="text-[11px] text-slate-400 font-mono">
+                  Subred Integrada de Salud Norte — Suba E.S.E.
+                </span>
+              </div>
             </div>
 
-            {/* Reset button */}
-            <button
-              onClick={onReset}
-              className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
-              title="Reiniciar casos de demostración"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
-
-            {/* Specialist Profile Selector */}
-            <div className="relative">
+            {/* SubaTech Co-branding & Indicadores Rápidos */}
+            <div className="hidden lg:flex items-center space-x-3 text-xs">
               <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center space-x-2.5 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 hover:border-slate-600 transition"
+                onClick={() => {
+                  const navBtn = document.querySelector('[data-tab="INTEGRATION"]') as HTMLButtonElement;
+                  if (navBtn) navBtn.click();
+                }}
+                className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-900 transition font-medium"
+                title="Abrir panel de integración WhatsApp Twilio 24/7"
               >
-                <img
-                  src={currentSpecialist.avatar}
-                  alt={currentSpecialist.name}
-                  className="w-7 h-7 rounded-full object-cover ring-1 ring-emerald-500/40"
-                />
-                <div className="text-left hidden sm:block">
-                  <div className="text-xs font-semibold text-white leading-tight">
-                    {currentSpecialist.name}
-                  </div>
-                  <div className="text-[10px] text-emerald-400 leading-tight">
-                    {currentSpecialist.role}
-                  </div>
-                </div>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-1" />
+                <Radio className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+                <span className="text-slate-600">WhatsApp Suba:</span>
+                <span className="font-mono font-bold text-slate-900">+1 415 523 8886</span>
               </button>
 
-              {dropdownOpen && (
-                <div 
-                  className="absolute right-0 mt-2 w-72 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-1.5 z-50"
-                  onClick={() => setDropdownOpen(false)}
-                >
-                  <div className="px-3 py-2 border-b border-slate-700/60 mb-1">
-                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                      Cambiar Especialista en Turno
-                    </p>
-                  </div>
-                  {PSYCHOLOGISTS.map((psy) => (
-                    <button
-                      key={psy.id}
-                      onClick={() => onSelectSpecialist(psy)}
-                      className={`w-full text-left p-2 rounded-lg flex items-center space-x-3 transition ${
-                        currentSpecialist.id === psy.id
-                          ? 'bg-emerald-500/10 border border-emerald-500/30'
-                          : 'hover:bg-slate-700/50'
-                      }`}
-                    >
-                      <img
-                        src={psy.avatar}
-                        alt={psy.name}
-                        className="w-9 h-9 rounded-full object-cover ring-1 ring-slate-600"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-white truncate">
-                          {psy.name}
-                        </p>
-                        <p className="text-[11px] text-teal-400 truncate">
-                          {psy.specialty}
-                        </p>
-                        <p className="text-[10px] text-slate-400">
-                          {psy.license}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
+              {crisisCount > 0 && (
+                <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#C8102E] text-white font-bold shadow-sm animate-pulse">
+                  <ShieldAlert className="w-4 h-4" />
+                  <span>{crisisCount} En Crisis</span>
                 </div>
               )}
+
+              <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-700">
+                <Activity className="w-3.5 h-3.5 text-amber-600" />
+                <span>Espera Triage:</span>
+                <span className="font-bold bg-amber-500/20 text-amber-800 px-1.5 py-0.2 rounded">{waitingCount}</span>
+              </div>
+
+              <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-700">
+                <UserCheck className="w-3.5 h-3.5 text-blue-600" />
+                <span>Mis Casos:</span>
+                <span className="font-bold text-slate-900">{activeCount}</span>
+              </div>
+            </div>
+
+            {/* Perfil del Profesional Autenticado */}
+            <div className="flex items-center space-x-3 shrink-0">
+              <div className="relative">
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className={`flex items-center space-x-2.5 px-3 py-1.5 rounded-xl border transition shadow-sm bg-white hover:bg-slate-50 ${
+                    currentUser.isAdmin || currentUser.email === 'kailabwasd@gmail.com'
+                      ? 'border-amber-400 ring-2 ring-amber-300/40'
+                      : 'border-slate-300 hover:border-slate-400'
+                  }`}
+                >
+                  <img
+                    src={currentUser.photoURL || 'https://images.unsplash.com/photo-1594824813576-a05e263d9061?w=150&auto=format&fit=crop&q=80'}
+                    alt={currentUser.displayName}
+                    className="w-8 h-8 rounded-lg object-cover ring-1 ring-slate-200"
+                  />
+                  <div className="text-left hidden sm:block max-w-[150px]">
+                    <div className="text-xs font-bold text-slate-900 leading-tight truncate flex items-center gap-1">
+                      <span>{currentUser.displayName}</span>
+                      {(currentUser.isAdmin || currentUser.email === 'kailabwasd@gmail.com') && (
+                        <span className="text-[10px]" title="Super Administrador">👑</span>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-emerald-700 font-mono leading-tight truncate flex items-center gap-1 font-semibold">
+                      <Award className="w-2.5 h-2.5 shrink-0 text-amber-600" />
+                      <span>{currentUser.license || 'Colpsic / Minsalud'}</span>
+                    </div>
+                  </div>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-500 ml-0.5" />
+                </button>
+
+                {dropdownOpen && (
+                  <div 
+                    className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-xl p-3 z-50 animate-in fade-in zoom-in-95 duration-100 text-slate-800"
+                  >
+                    {/* Tarjeta de identificación sanitaria */}
+                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 mb-2.5">
+                      <div className="flex items-start gap-3">
+                        <img
+                          src={currentUser.photoURL || 'https://images.unsplash.com/photo-1594824813576-a05e263d9061?w=150&auto=format&fit=crop&q=80'}
+                          alt={currentUser.displayName}
+                          className="w-11 h-11 rounded-lg object-cover ring-1 ring-slate-300"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-xs font-black text-slate-900 truncate">{currentUser.displayName}</p>
+                            {(currentUser.isAdmin || currentUser.email === 'kailabwasd@gmail.com') && (
+                              <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-900 font-bold border border-amber-300">
+                                ADMIN
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-500 truncate">{currentUser.email || 'profesional@bogota.gov.co'}</p>
+                          
+                          {/* Registro sanitario */}
+                          <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 border border-blue-200 text-[#004884] font-mono text-[10px] font-bold">
+                            <Award className="w-3 h-3 text-amber-600" />
+                            <span>{currentUser.license}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-2.5 pt-2 border-t border-slate-200 text-[11px] space-y-1 text-slate-600">
+                        <p><strong className="text-slate-800">Rol:</strong> {currentUser.role}</p>
+                        <p><strong className="text-slate-800">Especialidad:</strong> {currentUser.specialty}</p>
+                        {currentUser.institution && (
+                          <p className="flex items-center gap-1 text-slate-700 truncate">
+                            <Building2 className="w-3.5 h-3.5 text-blue-700 shrink-0" />
+                            <span className="truncate">{currentUser.institution}</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Acciones */}
+                    <div className="space-y-1">
+                      <button
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          onEditProfile();
+                        }}
+                        className="w-full py-2 px-3 rounded-lg text-xs font-bold text-[#004884] bg-blue-50 hover:bg-blue-100 border border-blue-200 transition flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Edit3 className="w-3.5 h-3.5 text-[#004884]" />
+                          <span>Modificar Perfil y Registro</span>
+                        </div>
+                        <span className="text-[10px] bg-white text-[#004884] px-2 py-0.5 rounded border border-blue-200">
+                          Editar
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          onLogout();
+                        }}
+                        className="w-full py-2 px-3 rounded-lg text-xs font-semibold text-[#C8102E] hover:bg-red-50 transition flex items-center justify-center gap-2 border border-transparent hover:border-red-200"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Cerrar Sesión Segura</span>
+                      </button>
+                    </div>
+
+                  </div>
+                )}
+              </div>
             </div>
 
           </div>
-
         </div>
       </div>
     </header>

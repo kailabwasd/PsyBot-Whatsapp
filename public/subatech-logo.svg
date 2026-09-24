@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 160" width="100%" height="100%">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800;900&amp;display=swap');
+      .brand-suba { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 88px; fill: #48455e; }
+      .brand-tech-te { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 88px; fill: #00e2fe; }
+      .brand-tech-c { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 88px; fill: #2bf267; }
+      .brand-tech-h { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 88px; fill: #ff3847; }
+      .brand-sub { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 500; font-size: 20px; fill: #5b5872; letter-spacing: 7px; }
+    </style>
+  </defs>
+  <!-- Text elements -->
+  <text x="30" y="98" class="brand-suba">Suba</text>
+  <text x="245" y="98" class="brand-tech-te">TE</text>
+  <!-- Play triangle in E -->
+  <polygon points="314,75 328,83 314,91" fill="#00e2fe" />
+  <text x="350" y="98" class="brand-tech-c">C</text>
+  <!-- Yellow dot in C -->
+  <circle cx="377" cy="69" r="13" fill="#eaff00" />
+  <text x="424" y="98" class="brand-tech-h">H</text>
+  
+  <!-- Subtitle -->
+  <text x="65" y="138" class="brand-sub">Cocreando la Suba del futuro</text>
+</svg>

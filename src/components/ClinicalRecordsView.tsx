@@ -20,7 +20,9 @@ import {
   Database,
   Table
 } from 'lucide-react';
-import type { ClinicalRecord, PatientSession } from '../types';
+import type { ClinicalRecord, PatientSession, PsychologistAuthUser } from '../types';
+import { SubaTechLogo } from './SubaTechLogo.tsx';
+import { Award } from 'lucide-react';
 import { 
   getAllClinicalRecordsFromFirestore, 
   saveClinicalRecordToFirestore, 
@@ -41,12 +43,14 @@ interface ClinicalRecordsViewProps {
   sessions: PatientSession[];
   initialSelectedRecordId?: string | null;
   onSelectRecord?: (recordId: string) => void;
+  currentUser?: PsychologistAuthUser | null;
 }
 
 export const ClinicalRecordsView: React.FC<ClinicalRecordsViewProps> = ({
   sessions,
   initialSelectedRecordId,
   onSelectRecord,
+  currentUser,
 }) => {
   const [records, setRecords] = useState<ClinicalRecord[]>([]);
   const [selectedRecord, setSelectedRecord] = useState<ClinicalRecord | null>(null);
@@ -248,23 +252,27 @@ export const ClinicalRecordsView: React.FC<ClinicalRecordsViewProps> = ({
   return (
     <div className="space-y-6">
       
-      {/* Top Banner: Firebase Firestore & Google Sheets Integration status */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 rounded-2xl p-5 border border-slate-800 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Top Banner: SubaTECH & Firebase Firestore status */}
+      <div className="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 rounded-3xl p-5 border border-slate-800 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-400">
-              <Database className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-extrabold text-white flex items-center gap-2">
-                Historial Clínico de Pacientes en Firebase Firestore
-                <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Conectado en Vivo
+          <div className="flex items-center gap-3">
+            <SubaTechLogo size="sm" showTagline={false} />
+            <div className="border-l border-slate-700 pl-3">
+              <h2 className="text-sm sm:text-base font-extrabold text-white flex items-center gap-2">
+                <span>Historiales Clínicos & Triage SubaTECH</span>
+                <span className="bg-[#2BF267]/20 text-[#2BF267] text-[10px] font-semibold px-2 py-0.5 rounded-full border border-[#2BF267]/30 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#2BF267] animate-pulse"></span>
+                  Firebase Firestore
                 </span>
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                Expedientes sociodemográficos, anamnesis, transcripción de conversaciones y link seguro para psicólogos.
+                {currentUser ? (
+                  <span>
+                    Profesional activo: <strong className="text-white">{currentUser.displayName}</strong> • <span className="text-[#00E5FF] font-mono">{currentUser.license}</span>
+                  </span>
+                ) : (
+                  'Expedientes sociodemográficos, anamnesis y transcripción con cifrado seguro.'
+                )}
               </p>
             </div>
           </div>

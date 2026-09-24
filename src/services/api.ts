@@ -2,12 +2,21 @@ import type { PatientSession, RiskLevel } from '../types/index.ts';
 
 export async function fetchSessions(): Promise<PatientSession[]> {
   try {
-    const res = await fetch('/api/sessions');
-    if (!res.ok) throw new Error('Failed to fetch sessions');
+    const res = await fetch('/api/sessions', {
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to fetch sessions`);
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      // Server returned HTML (e.g. while booting or during dev server proxy transition)
+      return [];
+    }
     const data = await res.json();
     return data.sessions || [];
   } catch (err) {
-    console.error('Error fetching sessions:', err);
+    console.warn('Waiting for backend sessions endpoint...', err);
     return [];
   }
 }
