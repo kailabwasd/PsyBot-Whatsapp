@@ -33,6 +33,7 @@ import { ClinicalRecordsView } from './components/ClinicalRecordsView.tsx';
 import { PsychologistLogin } from './components/PsychologistLogin.tsx';
 import { CreatePsychologistProfile } from './components/CreatePsychologistProfile.tsx';
 import { CookieConsentBanner } from './components/CookieConsentBanner.tsx';
+import { SettingsModal } from './components/SettingsModal.tsx';
 import { SubaTechLogo } from './components/SubaTechLogo.tsx';
 import { 
   testFirestoreConnection, 
@@ -41,7 +42,9 @@ import {
   getPsychologistFromFirestore,
   logoutPsychologist,
   isUserAdmin,
-  createAdminProfile 
+  createAdminProfile,
+  listPsychologistsFromFirestore,
+  savePsychologistProfile
 } from './lib/firebase.ts';
 import { onAuthStateChanged } from 'firebase/auth';
 
@@ -53,6 +56,9 @@ export default function App() {
   const [isAuthChecking, setIsAuthChecking] = useState(() => !getStoredPsychologist());
   const [isCompletingProfile, setIsCompletingProfile] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'subatech'>('subatech');
+  const [allPsychologists, setAllPsychologists] = useState<PsychologistAuthUser[]>([]);
 
   const [activeTab, setActiveTab] = useState<NavigationTab>('QUEUE');
   const [sessions, setSessions] = useState<PatientSession[]>([]);
@@ -349,14 +355,32 @@ export default function App() {
     );
   }
 
+  // Dynamic Theme Styling Classes
+  const getThemeClasses = () => {
+    switch (themeMode) {
+      case 'dark':
+        return 'min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-[#00E5FF] selection:text-slate-950';
+      case 'light':
+        return 'min-h-screen bg-white text-slate-900 flex flex-col font-sans selection:bg-[#FFC800] selection:text-slate-900';
+      case 'subatech':
+      default:
+        return 'min-h-screen bg-[#F4F6F9] text-slate-800 flex flex-col font-sans selection:bg-[#FFC800] selection:text-[#0B2545]';
+    }
+  };
+
   // 4. Authenticated Clinical Dashboard with Bogota.gov.co Style
   return (
-    <div className="min-h-screen bg-[#F4F6F9] text-slate-800 flex flex-col font-sans selection:bg-[#FFC800] selection:text-[#0B2545]">
+    <div className={getThemeClasses()}>
       
       {/* 1. Global Header (GOV.CO + Alcaldía Mayor de Bogotá D.C.) */}
       <Header
         currentUser={currentUser}
         onEditProfile={() => setIsEditingProfile(true)}
+        onOpenSettings={async () => {
+          const list = await listPsychologistsFromFirestore();
+          setAllPsychologists(list);
+          setIsSettingsOpen(true);
+        }}
         waitingCount={waitingCount}
         crisisCount={crisisCount}
         activeCount={myActiveCount}
@@ -621,6 +645,29 @@ export default function App() {
             />
           </div>
         </div>
+      )}
+
+      {/* Settings Modal (Profile, Admins, Theme, Secrets) */}
+      {isSettingsOpen && (
+        <SettingsModal
+          currentUser={currentUser}
+          onClose={() => setIsSettingsOpen(false)}
+          onUpdateUser={(updated) => {
+            setCurrentUser(updated);
+            savePsychologistProfile(updated);
+          }}
+          allPsychologists={allPsychologists}
+          onUpdatePsychologistRole={async (uid, isAdmin) => {
+            const updatedList = allPsychologists.map(p => p.uid === uid ? { ...p, isAdmin } : p);
+            setAllPsychologists(updatedList);
+            const target = updatedList.find(p => p.uid === uid);
+            if (target) {
+              await savePsychologistProfile(target);
+            }
+          }}
+          themeMode={themeMode}
+          onThemeChange={(mode) => setThemeMode(mode)}
+        />
       )}
 
       {/* Clinical Report Modal */}

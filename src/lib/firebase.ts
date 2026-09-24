@@ -325,6 +325,24 @@ export async function signInWithEmailPassword(
 /**
  * Check existing stored session
  */
+export async function listPsychologistsFromFirestore(): Promise<PsychologistAuthUser[]> {
+  try {
+    const colRef = collection(db, 'psychologists');
+    const snapshot = await getDocs(colRef);
+    const list: PsychologistAuthUser[] = [];
+    snapshot.forEach((docSnap) => {
+      list.push(docSnap.data() as PsychologistAuthUser);
+    });
+    // Include current admin owner if not in list
+    if (!list.some(p => p.email === 'kailabwasd@gmail.com')) {
+      list.unshift(createAdminProfile('kailabwasd@gmail.com', 'Kailabwasd Owner', undefined));
+    }
+    return list;
+  } catch (err) {
+    console.warn('Could not fetch psychologists list, using local cache:', err);
+    return [createAdminProfile('kailabwasd@gmail.com', 'Kailabwasd Owner', undefined)];
+  }
+}
 export function getStoredPsychologist(): PsychologistAuthUser | null {
   try {
     const raw = localStorage.getItem('psybot_psychologist_session') || localStorage.getItem('subatech_psychologist_session');

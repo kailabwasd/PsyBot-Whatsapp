@@ -12,7 +12,8 @@ import {
   ChevronDown,
   PhoneCall,
   ExternalLink,
-  HeartPulse
+  HeartPulse,
+  Settings
 } from 'lucide-react';
 import type { PsychologistAuthUser } from '../types/index.ts';
 import { BogotaCrest } from './BogotaCrest.tsx';
@@ -21,6 +22,7 @@ import { SubaTechLogo } from './SubaTechLogo.tsx';
 interface HeaderProps {
   currentUser: PsychologistAuthUser;
   onEditProfile: () => void;
+  onOpenSettings: () => void;
   waitingCount: number;
   crisisCount: number;
   activeCount: number;
@@ -30,6 +32,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   currentUser,
   onEditProfile,
+  onOpenSettings,
   waitingCount,
   crisisCount,
   activeCount,
@@ -211,6 +214,22 @@ export const Header: React.FC<HeaderProps> = ({
 
                     {/* Acciones */}
                     <div className="space-y-1">
+                      <button
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          onOpenSettings();
+                        }}
+                        className="w-full py-2 px-3 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Settings className="w-3.5 h-3.5 text-slate-700" />
+                          <span>Configuración General</span>
+                        </div>
+                        <span className="text-[10px] bg-white text-slate-700 px-2 py-0.5 rounded border border-slate-300">
+                          Panel
+                        </span>
+                      </button>
+
                       <button
                         onClick={() => {
                           setDropdownOpen(false);

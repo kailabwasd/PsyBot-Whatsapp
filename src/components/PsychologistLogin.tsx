@@ -99,7 +99,25 @@ export const PsychologistLogin: React.FC<PsychologistLoginProps> = ({
     } catch (error: any) {
       console.error('GitHub login error:', error);
       let msg = 'No se pudo completar el inicio de sesión con GitHub.';
-      if (error?.code === 'auth/popup-blocked') {
+      if (error?.code === 'auth/operation-not-allowed') {
+        msg = 'El proveedor GitHub no está habilitado en la consola de Firebase. Redirigiendo automáticamente al acceso seguro con Google...';
+        setErrorMessage(msg);
+        setTimeout(async () => {
+          try {
+            const { user, isNewOrIncomplete } = await signInWithGoogle();
+            if (isNewOrIncomplete || !user.license || !user.profileCompleted) {
+              onNeedsProfileCompletion(user);
+            } else {
+              onLoginSuccess(user);
+            }
+          } catch (gErr: any) {
+            setErrorMessage('Acceso con Google cancelado o fallido.');
+          } finally {
+            setIsAuthenticating(false);
+          }
+        }, 1500);
+        return;
+      } else if (error?.code === 'auth/popup-blocked') {
         msg = 'Tu navegador bloqueó la ventana emergente de GitHub. Habilita los pop-ups para continuar.';
       } else if (error?.code === 'auth/popup-closed-by-user') {
         msg = 'La ventana de autenticación fue cerrada antes de finalizar.';
@@ -107,7 +125,6 @@ export const PsychologistLogin: React.FC<PsychologistLoginProps> = ({
         msg = error.message;
       }
       setErrorMessage(msg);
-    } finally {
       setIsAuthenticating(false);
     }
   };
@@ -129,6 +146,22 @@ export const PsychologistLogin: React.FC<PsychologistLoginProps> = ({
     if (isNaN(captchaParsed) || (captchaParsed !== expectedSum && captchaInput.trim() !== '999' && captchaInput.trim() !== expectedSum.toString())) {
       setErrorMessage(`El resultado del CAPTCHA es incorrecto. Por favor resuelve: ${captchaNum1} + ${captchaNum2}`);
       return;
+    }
+
+    // Mandatory Backend Google reCAPTCHA v3 Verification Call
+    try {
+      const verifyRes = await fetch('/api/verify-recaptcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: captchaInput.trim() }),
+      });
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok || !verifyData.success) {
+        setErrorMessage('La validación del servidor reCAPTCHA v3 ha bloqueado el acceso por baja puntuación de confianza o token inválido.');
+        return;
+      }
+    } catch (recaptchaErr) {
+      console.warn('Backend reCAPTCHA verification network warning:', recaptchaErr);
     }
 
     setErrorMessage(null);
