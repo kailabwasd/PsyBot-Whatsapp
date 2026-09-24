@@ -66,6 +66,7 @@ export interface PsychologistAuthUser {
   twoFactorSecret?: string;
   twoFactorEnabled?: boolean;
   isAdmin?: boolean;
+  uniqueUserId?: string; // Unique numerical user ID e.g. SUB-1042
   createdAt?: number;
   lastLoginAt?: number;
 }

@@ -13,9 +13,11 @@ import {
   Globe,
   Database,
   Terminal,
-  AlertCircle
+  AlertCircle,
+  FileClock
 } from 'lucide-react';
 import type { PsychologistAuthUser } from '../types/index.ts';
+import { AuditLog } from './AuditLog.tsx';
 
 interface SettingsModalProps {
   currentUser: PsychologistAuthUser;
@@ -36,7 +38,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   themeMode,
   onThemeChange,
 }) => {
-  const [activeTab, setActiveTab] = useState<'profile' | 'admins' | 'theme' | 'secrets'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'admins' | 'theme' | 'secrets' | 'audit'>('profile');
   
   // Profile editing local state
   const [displayName, setDisplayName] = useState(currentUser.displayName || '');
@@ -137,6 +139,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <Key className="w-4 h-4 text-[#FF3646]" />
               <span>Twilio, Github & Railway Secrets</span>
               <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-950 text-red-300 border border-red-500/40">Owner</span>
+            </button>
+          )}
+
+          {isOwner && (
+            <button
+              onClick={() => setActiveTab('audit')}
+              className={`py-3 px-4 text-xs font-bold border-b-2 flex items-center gap-2 transition cursor-pointer whitespace-nowrap ${activeTab === 'audit' ? 'border-[#00E5FF] text-[#00E5FF]' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
+            >
+              <FileClock className="w-4 h-4 text-[#2BF267]" />
+              <span>AuditLog</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/40">Admin</span>
             </button>
           )}
         </div>
@@ -385,6 +398,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </button>
               </div>
             </form>
+          )}
+
+          {/* TAB 5: AUDIT LOG */}
+          {activeTab === 'audit' && (
+            <AuditLog currentUser={currentUser} />
           )}
 
         </div>
