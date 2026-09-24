@@ -56,6 +56,35 @@ const processedTwilioSids = new Set<string>();
 let isPollingTwilio = false;
 let lastSyncTimestamp = Date.now();
 
+// API route for reCAPTCHA v3 verification
+app.post('/api/verify-recaptcha', async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ success: false, error: 'Token de reCAPTCHA faltante' });
+    }
+
+    const secretKey = process.env.RECAPTCHA_SECRET_KEY || '';
+    if (!secretKey) {
+      // If no secret key is configured in dev environment, allow test bypass
+      return res.json({ success: true, score: 0.9, note: 'Development bypass active' });
+    }
+
+    const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${encodeURIComponent(secretKey)}&response=${encodeURIComponent(token)}`;
+    const response = await fetch(verifyUrl, { method: 'POST' });
+    const data: any = await response.json();
+
+    if (data.success && (data.score === undefined || data.score >= 0.3)) {
+      return res.json({ success: true, score: data.score });
+    } else {
+      return res.status(403).json({ success: false, error: 'Verificación de reCAPTCHA fallida o puntuación de bot sospechosa', data });
+    }
+  } catch (err: any) {
+    console.error('reCAPTCHA verification error:', err);
+    return res.status(500).json({ success: false, error: err.message || 'Error interno de verificación de reCAPTCHA' });
+  }
+});
+
 // Twilio Inbound Synchronization Engine
 // Allows full 2-way WhatsApp interaction directly in Google AI Studio without requiring Ngrok or external webhooks!
 async function syncTwilioInboundMessages(): Promise<{ newCount: number; processed: string[] }> {
@@ -345,7 +374,7 @@ async function processIncomingWhatsAppMessage(
       id: cleanPhone,
       phoneNumber: cleanPhone.replace('whatsapp:', ''),
       userName: profileName || '',
-      state: 'AI_MODE', // Default is AI assistance mode. Patients talk with AI unless they ask for a human psychologist.
+      state: 'AI_MODE',
       riskLevel: 'BAJO',
       startedAt: now,
       lastActivityAt: now,
@@ -354,8 +383,70 @@ async function processIncomingWhatsAppMessage(
       diagnosticImpressions: [],
       tags: ['Paciente'],
       sentimentScore: 0,
+      termsAccepted: false,
     };
     sessions.set(cleanPhone, session);
+
+    // Send mandatory initial message with Terms & Conditions and Privacy Policy consent request
+    const welcomeTermsReply = `🌿 *Bienvenido(a) a SubaTECH Salud Mental / Psybot*
+
+Para continuar y brindarte un espacio seguro de teleorientación y apoyo psicológico, es necesario que leas y aceptes nuestros Términos de Uso y Política de Privacidad (Ley de Protección de Datos y Secreto Profesional).
+
+📄 *Resumen de Políticas:*
+1. Tus datos personales y historiales clínicos están cifrados y protegidos.
+2. Este servicio es de orientación y triage, no sustituye la psiquiatría presencial.
+3. En caso de crisis o riesgo vital, derivamos a la línea de emergencias 123 / 106.
+
+Por favor responde a este mensaje con:
+✅ *#aceptar* (para aceptar los términos y comenzar)
+❌ *#negar* (para rechazar y finalizar)`;
+
+    const initMsg: ChatMessage = {
+      id: `bot-terms-${Date.now()}`,
+      sender: 'bot',
+      text: welcomeTermsReply,
+      timestamp: now,
+    };
+    session.messages.push(initMsg);
+    return { reply: welcomeTermsReply, session };
+  }
+
+  // Handle Terms Acceptance / Denial Handshake if not yet accepted
+  if (session.termsAccepted !== true) {
+    if (lowerText.includes('#aceptar') || lowerText === 'aceptar' || lowerText === '1' || lowerText === 'si') {
+      session.termsAccepted = true;
+      const reply = `✅ *¡Términos y Política de Privacidad Aceptados!*
+
+Muchas gracias. Ya estás habilitado(a) para conversar con Aura (nuestra asistente de IA con apoyo emocional) o solicitar en cualquier momento un psicólogo real escribiendo *#psicologo*. ¿Cómo te sientes hoy?`;
+      const botMsg: ChatMessage = {
+        id: `bot-${Date.now()}`,
+        sender: 'bot',
+        text: reply,
+        timestamp: Date.now(),
+      };
+      session.messages.push(botMsg);
+      return { reply, session };
+    } else if (lowerText.includes('#negar') || lowerText === 'negar' || lowerText === 'rechazar' || lowerText === '2' || lowerText === 'no') {
+      const reply = `❌ Has rechazado los términos de privacidad. De acuerdo con las normas de confidencialidad, no podemos procesar tu información. Si cambias de opinión, escribe *#aceptar* en cualquier momento.`;
+      const botMsg: ChatMessage = {
+        id: `bot-${Date.now()}`,
+        sender: 'bot',
+        text: reply,
+        timestamp: Date.now(),
+      };
+      session.messages.push(botMsg);
+      return { reply, session };
+    } else {
+      const reply = `⚠️ Para poder conversar con nosotros en SubaTECH / Psybot, por favor responde primero escribiendo **#aceptar** o **#negar** a nuestros Términos y Política de Privacidad.`;
+      const botMsg: ChatMessage = {
+        id: `bot-${Date.now()}`,
+        sender: 'bot',
+        text: reply,
+        timestamp: Date.now(),
+      };
+      session.messages.push(botMsg);
+      return { reply, session };
+    }
   }
 
   session.lastActivityAt = now;

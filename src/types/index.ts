@@ -37,6 +37,7 @@ export interface PatientSession {
   tags: string[];
   sentimentScore: number; // -1.0 to 1.0
   isSimulated?: boolean;
+  termsAccepted?: boolean;
 }
 
 export interface PsychologistProfile {
@@ -62,6 +63,8 @@ export interface PsychologistAuthUser {
   phone?: string;
   termsAccepted: boolean;
   profileCompleted: boolean;
+  twoFactorSecret?: string;
+  twoFactorEnabled?: boolean;
   isAdmin?: boolean;
   createdAt?: number;
   lastLoginAt?: number;

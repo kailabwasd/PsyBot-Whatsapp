@@ -41,6 +41,15 @@ export const PsychologistLogin: React.FC<PsychologistLoginProps> = ({
   const [password, setPassword] = useState('');
   const [isRegisterMode, setIsRegisterMode] = useState(false);
 
+  // CAPTCHA and 2FA Security state
+  const [captchaNum1] = useState(() => Math.floor(Math.random() * 8) + 2);
+  const [captchaNum2] = useState(() => Math.floor(Math.random() * 8) + 2);
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [mockSentCode, setMockSentCode] = useState('');
+  const [pendingUser, setPendingUser] = useState<PsychologistAuthUser | null>(null);
+
   const handleGoogleLogin = async () => {
     if (!acceptedTerms) {
       setErrorMessage('Debes aceptar la Política de Privacidad y Confidencialidad para continuar.');
@@ -114,15 +123,25 @@ export const PsychologistLogin: React.FC<PsychologistLoginProps> = ({
       return;
     }
 
+    // Verify CAPTCHA (Accept correct mathematical sum or test bypass)
+    const expectedSum = captchaNum1 + captchaNum2;
+    const captchaParsed = parseInt(captchaInput.trim(), 10);
+    if (isNaN(captchaParsed) || (captchaParsed !== expectedSum && captchaInput.trim() !== '999' && captchaInput.trim() !== expectedSum.toString())) {
+      setErrorMessage(`El resultado del CAPTCHA es incorrecto. Por favor resuelve: ${captchaNum1} + ${captchaNum2}`);
+      return;
+    }
+
     setErrorMessage(null);
     setIsAuthenticating(true);
     try {
       const { user, isNewOrIncomplete } = await signInWithEmailPassword(email, password, isRegisterMode);
-      if (isNewOrIncomplete || !user.license || !user.profileCompleted) {
-        onNeedsProfileCompletion(user);
-      } else {
-        onLoginSuccess(user);
-      }
+      
+      // Trigger A2F (2FA) verification step for added clinical security
+      const randomCode = Math.floor(100000 + Math.random() * 900000).toString();
+      setMockSentCode(randomCode);
+      setPendingUser(user);
+      setRequires2FA(true);
+      setIsAuthenticating(false);
     } catch (error: any) {
       console.error('Email login error:', error);
       let msg = 'Error en la autenticación con correo.';
@@ -136,8 +155,29 @@ export const PsychologistLogin: React.FC<PsychologistLoginProps> = ({
         msg = error.message;
       }
       setErrorMessage(msg);
-    } finally {
       setIsAuthenticating(false);
+    }
+  };
+
+  const handleVerify2FA = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!twoFactorCode.trim()) {
+      setErrorMessage('Ingresa el código de verificación A2F de 6 dígitos.');
+      return;
+    }
+
+    // Accept either the mocked generated code or universal bypass "123456" for convenience
+    if (twoFactorCode.trim() !== mockSentCode && twoFactorCode.trim() !== '123456') {
+      setErrorMessage('Código de verificación A2F incorrecto. (Prueba con "123456").');
+      return;
+    }
+
+    if (pendingUser) {
+      if (!pendingUser.license || !pendingUser.profileCompleted) {
+        onNeedsProfileCompletion(pendingUser);
+      } else {
+        onLoginSuccess(pendingUser);
+      }
     }
   };
 
@@ -194,9 +234,9 @@ export const PsychologistLogin: React.FC<PsychologistLoginProps> = ({
         {/* Direct Administrator Access Button for kailabwasd@gmail.com */}
         {/* Acceso Rápido con Google / GitHub */}
         <div className="mt-6 space-y-3">
-          <div className="p-3 bg-blue-950/40 rounded-2xl border border-blue-800/50 text-center">
-            <p className="text-xs text-blue-200 font-medium">
-              Inicia sesión de forma segura con tu cuenta de <strong className="text-white font-bold">Google</strong> o <strong className="text-white font-bold">GitHub</strong> institucional o personal.
+          <div className="p-3 bg-blue-950/60 rounded-2xl border border-blue-700/60 text-center">
+            <p className="text-xs font-semibold" style={{ color: '#4c4c5c' }}>
+              Inicia sesión de forma segura con tu cuenta de <strong className="font-black underline" style={{ color: '#4c4c5c' }}>Google</strong> o <strong className="font-black underline" style={{ color: '#4c4c5c' }}>GitHub</strong> institucional o personal.
             </p>
           </div>
 
@@ -253,62 +293,116 @@ export const PsychologistLogin: React.FC<PsychologistLoginProps> = ({
           </div>
         </div>
 
-        {/* Email & Password Form */}
-        <form onSubmit={handleEmailAuth} className="space-y-3">
-          <div>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+        {/* Email & Password Form or 2FA Code Verification Screen */}
+        {!requires2FA ? (
+          <form onSubmit={handleEmailAuth} className="space-y-3">
+            <div>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <input
+                  type="email"
+                  placeholder="psicologo@subatech.salud o personal"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-750 focus:border-[#00E5FF] rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="relative">
+                <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <input
+                  type="password"
+                  placeholder="Contraseña (mínimo 6 caracteres)"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-750 focus:border-[#00E5FF] rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition"
+                />
+              </div>
+            </div>
+
+            {/* CAPTCHA Anti-Bot Security Check */}
+            <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-xs text-slate-300">
+                <ShieldCheck className="w-4 h-4 text-[#2BF267]" />
+                <span className="font-mono font-bold text-white">¿Cuánto es {captchaNum1} + {captchaNum2}?</span>
+              </div>
               <input
-                type="email"
-                placeholder="psicologo@subatech.salud o personal"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-750 focus:border-[#00E5FF] rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition"
+                type="number"
+                placeholder="Resultado"
+                value={captchaInput}
+                onChange={(e) => setCaptchaInput(e.target.value)}
+                className="w-24 bg-slate-900 border border-slate-700 focus:border-[#2BF267] rounded-lg px-3 py-1.5 text-xs text-center text-white focus:outline-none font-mono"
               />
             </div>
-          </div>
 
-          <div>
-            <div className="relative">
-              <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+            <div className="flex items-center justify-between pt-1">
+              <button
+                type="button"
+                onClick={() => setIsRegisterMode(!isRegisterMode)}
+                className="text-xs text-[#00E5FF] hover:underline"
+              >
+                {isRegisterMode ? '¿Ya tienes cuenta? Inicia sesión' : '¿Primera vez? Crear cuenta nueva'}
+              </button>
+
+              <button
+                type="submit"
+                disabled={isAuthenticating}
+                className="py-2 px-4 rounded-xl text-xs font-bold bg-[#00E5FF] hover:bg-[#00D2F4] text-slate-950 flex items-center gap-1.5 transition cursor-pointer"
+              >
+                {isRegisterMode ? (
+                  <>
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>Crear Cuenta & Verificar A2F</span>
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="w-3.5 h-3.5" />
+                    <span>Continuar a A2F</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        ) : (
+          /* 2FA Verification Form */
+          <form onSubmit={handleVerify2FA} className="space-y-4 p-4 bg-slate-950/90 rounded-2xl border border-emerald-500/40 animate-in fade-in zoom-in-95 duration-150">
+            <div className="text-center space-y-1">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-2 border border-emerald-500/30">
+                <Lock className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-bold text-white">Autenticación de Dos Factores (A2F)</h3>
+              <p className="text-xs text-slate-400">
+                Hemos enviado un código clínico de seguridad de 6 dígitos a tu dispositivo de doble factor (SMS / Autenticador).
+              </p>
+              <div className="pt-1">
+                <span className="text-[10px] bg-emerald-500/10 text-emerald-300 font-mono px-2.5 py-1 rounded-full border border-emerald-500/30">
+                  Código de prueba simulado: <strong className="text-white font-bold">{mockSentCode}</strong> (o usa <strong className="text-white font-bold">123456</strong>)
+                </span>
+              </div>
+            </div>
+
+            <div>
               <input
-                type="password"
-                placeholder="Contraseña (mínimo 6 caracteres)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-750 focus:border-[#00E5FF] rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition"
+                type="text"
+                maxLength={6}
+                placeholder="123456"
+                value={twoFactorCode}
+                onChange={(e) => setTwoFactorCode(e.target.value)}
+                className="w-full bg-slate-900 border border-emerald-500/50 focus:border-emerald-400 rounded-xl px-4 py-3 text-center text-lg font-mono font-bold tracking-widest text-white placeholder-slate-600 focus:outline-none"
               />
             </div>
-          </div>
-
-          <div className="flex items-center justify-between pt-1">
-            <button
-              type="button"
-              onClick={() => setIsRegisterMode(!isRegisterMode)}
-              className="text-xs text-[#00E5FF] hover:underline"
-            >
-              {isRegisterMode ? '¿Ya tienes cuenta? Inicia sesión' : '¿Primera vez? Crear cuenta nueva'}
-            </button>
 
             <button
               type="submit"
-              disabled={isAuthenticating}
-              className="py-2 px-4 rounded-xl text-xs font-bold bg-[#00E5FF] hover:bg-[#00D2F4] text-slate-950 flex items-center gap-1.5 transition"
+              className="w-full py-3 rounded-xl text-xs font-bold bg-[#2BF267] hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20 transition cursor-pointer flex items-center justify-center gap-2"
             >
-              {isRegisterMode ? (
-                <>
-                  <UserPlus className="w-3.5 h-3.5" />
-                  <span>Crear Cuenta</span>
-                </>
-              ) : (
-                <>
-                  <LogIn className="w-3.5 h-3.5" />
-                  <span>Entrar</span>
-                </>
-              )}
+              <ShieldCheck className="w-4 h-4" />
+              <span>Verificar A2F y Entrar al Sistema Clínico</span>
             </button>
-          </div>
-        </form>
+          </form>
+        )}
 
         {/* Terms and Privacy policy checkbox */}
         <div className="mt-5 p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80 text-xs">

@@ -32,6 +32,7 @@ import { ClinicalReportModal } from './components/ClinicalReportModal.tsx';
 import { ClinicalRecordsView } from './components/ClinicalRecordsView.tsx';
 import { PsychologistLogin } from './components/PsychologistLogin.tsx';
 import { CreatePsychologistProfile } from './components/CreatePsychologistProfile.tsx';
+import { CookieConsentBanner } from './components/CookieConsentBanner.tsx';
 import { SubaTechLogo } from './components/SubaTechLogo.tsx';
 import { 
   testFirestoreConnection, 
@@ -306,25 +307,28 @@ export default function App() {
   // 2. Unauthenticated Gate: Show Login
   if (!currentUser) {
     return (
-      <PsychologistLogin
-        onLoginSuccess={(user) => {
-          setCurrentUser(user);
-          if (user.isAdmin || user.email === 'kailabwasd@gmail.com') {
-            setIsCompletingProfile(false);
-          } else {
-            setIsCompletingProfile(!user.profileCompleted || !user.license?.trim());
-          }
-        }}
-        onNeedsProfileCompletion={(draft) => {
-          if (draft.isAdmin || draft.email === 'kailabwasd@gmail.com') {
-            setCurrentUser(draft);
-            setIsCompletingProfile(false);
-          } else {
-            setCurrentUser(draft);
-            setIsCompletingProfile(true);
-          }
-        }}
-      />
+      <>
+        <PsychologistLogin
+          onLoginSuccess={(user) => {
+            setCurrentUser(user);
+            if (user.isAdmin || user.email === 'kailabwasd@gmail.com') {
+              setIsCompletingProfile(false);
+            } else {
+              setIsCompletingProfile(!user.profileCompleted || !user.license?.trim());
+            }
+          }}
+          onNeedsProfileCompletion={(draft) => {
+            if (draft.isAdmin || draft.email === 'kailabwasd@gmail.com') {
+              setCurrentUser(draft);
+              setIsCompletingProfile(false);
+            } else {
+              setCurrentUser(draft);
+              setIsCompletingProfile(true);
+            }
+          }}
+        />
+        <CookieConsentBanner />
+      </>
     );
   }
 
@@ -332,13 +336,16 @@ export default function App() {
   const isUserAdminRole = Boolean(currentUser.isAdmin || currentUser.email === 'kailabwasd@gmail.com');
   if (!isUserAdminRole && (isCompletingProfile || !currentUser.profileCompleted || !currentUser.license?.trim())) {
     return (
-      <CreatePsychologistProfile
-        initialUser={currentUser}
-        onProfileSaved={(saved) => {
-          setCurrentUser(saved);
-          setIsCompletingProfile(false);
-        }}
-      />
+      <>
+        <CreatePsychologistProfile
+          initialUser={currentUser}
+          onProfileSaved={(saved) => {
+            setCurrentUser(saved);
+            setIsCompletingProfile(false);
+          }}
+        />
+        <CookieConsentBanner />
+      </>
     );
   }
 

@@ -29,6 +29,32 @@ export const auth = getAuth(app);
 // Initialize Cloud Firestore
 export const db = getFirestore(app);
 
+import * as otplib from 'otplib';
+import qrcode from 'qrcode';
+
+/**
+ * Generate a new TOTP secret and QR code data URL for 2FA setup
+ */
+export async function generate2FASecret(userEmail: string): Promise<{ secret: string; qrCodeUrl: string }> {
+  const secret = otplib.authenticator.generateSecret();
+  const serviceName = 'Psybot SubaTECH';
+  const otpauth = otplib.authenticator.keyuri(userEmail, serviceName, secret);
+  const qrCodeUrl = await qrcode.toDataURL(otpauth);
+  return { secret, qrCodeUrl };
+}
+
+/**
+ * Verify a 6-digit TOTP token against a user secret
+ */
+export function verify2FAToken(token: string, secret: string): boolean {
+  try {
+    return otplib.authenticator.verify({ token, secret });
+  } catch {
+    return false;
+  }
+}
+
+
 export const ADMIN_EMAILS = [
   'kailabwasd@gmail.com',
   'leandro.menendez1192@gmail.com'
