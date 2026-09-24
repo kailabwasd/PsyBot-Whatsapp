@@ -19,6 +19,7 @@ import {
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import type { PsychologistAuthUser } from '../types/index.ts';
+import { encryptSecret, decryptSecret } from './cryptoUtils.ts';
 
 // Initialize Firebase App
 export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
@@ -132,7 +133,11 @@ export async function getPsychologistFromFirestore(uid: string): Promise<Psychol
     const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 1000));
     const snap = await Promise.race([snapPromise, timeoutPromise]);
     if (snap && 'exists' in snap && (snap as any).exists()) {
-      return (snap as any).data() as PsychologistAuthUser;
+      const data = (snap as any).data() as PsychologistAuthUser;
+      if (data.twoFactorSecret) {
+        data.twoFactorSecret = await decryptSecret(data.twoFactorSecret);
+      }
+      return data;
     }
   } catch (err) {
     console.warn('Error reading psychologist profile from Firestore:', err);
@@ -141,7 +146,7 @@ export async function getPsychologistFromFirestore(uid: string): Promise<Psychol
 }
 
 /**
- * Save / Update psychologist profile in Firestore and localStorage
+ * Save / Update psychologist profile in Firestore and localStorage (with encrypted 2FA secret)
  */
 export async function savePsychologistProfile(profile: PsychologistAuthUser): Promise<PsychologistAuthUser> {
   const updatedProfile: PsychologistAuthUser = {
@@ -151,8 +156,15 @@ export async function savePsychologistProfile(profile: PsychologistAuthUser): Pr
   };
 
   try {
+    // Encrypt 2FA secret before persisting to Firestore for medical data compliance
+    const firestorePayload: any = { ...updatedProfile };
+    if (updatedProfile.twoFactorSecret) {
+      firestorePayload.twoFactorSecret = await encryptSecret(updatedProfile.twoFactorSecret);
+      firestorePayload.is2FASecretEncrypted = true;
+    }
+
     const userDocRef = doc(db, 'psychologists', profile.uid);
-    setDoc(userDocRef, updatedProfile, { merge: true }).catch(() => {});
+    setDoc(userDocRef, firestorePayload, { merge: true }).catch(() => {});
   } catch (error) {
     console.warn('Could not sync psychologist profile to Firestore:', error);
   }
