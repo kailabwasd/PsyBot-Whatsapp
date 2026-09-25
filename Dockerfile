@@ -35,6 +35,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server.ts ./server.ts
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/firebase-applet-config.json ./firebase-applet-config.json
+COPY --from=builder /app/.env* ./
 
 # Expose server port
 EXPOSE 3000

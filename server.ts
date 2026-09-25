@@ -397,12 +397,28 @@ Directrices éticas y operativas estrictas:
 4. Si detectas que la persona necesita apoyo profesional humano, recuérdale que puede escribir "#psicologo" en cualquier momento para conectarse con un terapeuta humano en guardia.
 5. Si detectas dolor extremo o peligro, ofrece de inmediato contención y recursos de emergencia.`;
 
+// Helper: Context-aware empathetic responder when no external LLM key is configured
+function generateSmartClinicalResponse(prompt: string): string {
+  const lower = prompt.toLowerCase();
+  if (lower.includes('ansiedad') || lower.includes('ansioso') || lower.includes('ansiosa') || lower.includes('panico') || lower.includes('nervios')) {
+    return '🌱 *Comprendo profundamente cómo la ansiedad puede acelerar tus pensamientos y tu cuerpo.* \n\nVamos a dar un paso a la vez. Hagamos un breve ejercicio de anclaje:\n1. Respira profundo inhalando en 4 segundos.\n2. Sostén el aire 4 segundos.\n3. Exhala lentamente en 6 segundos.\n\n¿Sientes alguna sensación física predominante en este momento? Recuerda que si deseas que un profesional te atienda directamente, escribe *#psicologo*.';
+  }
+  if (lower.includes('triste') || lower.includes('depre') || lower.includes('llorar') || lower.includes('desanimo') || lower.includes('solo') || lower.includes('sola')) {
+    return '💙 *Lamento mucho que estés atravesando este momento tan pesado.* Tus emociones son completamente válidas y no tienes que cargar con todo esto en soledad. Estoy aquí para acompañarte paso a paso. ¿Desde hace cuánto tiempo te vienes sintiendo así?';
+  }
+  if (lower.includes('dormir') || lower.includes('insomnio') || lower.includes('pesadilla') || lower.includes('cansado') || lower.includes('cansada')) {
+    return '🌙 *El descanso es fundamental para la salud emocional.* Cuando nos cuesta conciliar el sueño, suele ser reflejo de preocupaciones acumuladas. ¿Hay algún pensamiento en particular que no te deje desconectar esta noche?';
+  }
+  if (lower.includes('gracias') || lower.includes('hola') || lower.includes('buenos') || lower.includes('buenas')) {
+    return '👋 *Hola, es un gusto saludarte.* Soy Aura, tu asistente de apoyo emocional de SubaTECH. ¿Cómo te encuentras hoy y en qué te gustaría que nos enfoquemos juntos?';
+  }
+  return 'Entiendo lo que me compartes y quiero que sepas que este es un espacio seguro para expresarte. Cuéntame un poco más sobre lo que estás viviendo, o si lo prefieres, puedes solicitar atención directa con nuestro equipo de psicólogos humanos escribiendo *#psicologo*.';
+}
+
 // Call Gemini API with automatic retries for 503 / high demand resilience
 async function callGeminiWithRetry(prompt: string, contextMessages: ChatMessage[], retryCount = 0): Promise<string> {
-  const fallbackText = 'Entiendo lo difícil y abrumador que esto puede ser para ti en este momento. Estoy aquí para escucharte y acompañarte. ¿Podrías contarme un poco más sobre lo que estás experimentando, o prefieres que te conecte directamente con nuestro equipo de psicólogos humanos en guardia escribiendo "#psicologo"?';
-
   if (!process.env.GEMINI_API_KEY) {
-    return fallbackText;
+    return generateSmartClinicalResponse(prompt);
   }
 
   const MAX_RETRIES = 1; // Keep to 1 retry so response is always under Twilio 10-15s webhook timeout
@@ -429,7 +445,7 @@ async function callGeminiWithRetry(prompt: string, contextMessages: ChatMessage[
       return callGeminiWithRetry(prompt, contextMessages, retryCount + 1);
     }
     // Fallback response if API fails or quota exceeded
-    return fallbackText;
+    return generateSmartClinicalResponse(prompt);
   }
 }
 
